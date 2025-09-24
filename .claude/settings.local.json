@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git rev-parse:*)",
+      "Bash(git commit:*)",
+      "Bash(source:*)",
+      "Bash(conda activate:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
