@@ -3,6 +3,7 @@
     "allow": [
       "Bash(git rev-parse:*)",
       "Bash(git commit:*)",
+      "Bash(git log:*)",
       "Bash(source:*)",
       "Bash(conda activate:*)"
     ],
