@@ -1,12 +1,15 @@
 
 ---
 
-### Some project independent instructions to CLAUDE - to make it a better coding partner
+### Some project **independent** instructions to CLAUDE - to make it a better coding partner
 
 > **purpose** – This file is the onboarding manual for every AI assistant (Claude, Cursor, GPT, etc.) and every human who edits this repository.
 > It encodes our coding standards, guard-rails, and workflow tricks so the *human 30 %* (architecture, tests, domain judgment) stays in human hands.[^1]
 
 ---
+
+## 0. Always run prelude.sh
+Always run the prelude.sh file - it helps in setting up the correct environment.
 
 ## 1. Non-negotiable golden rules
 
