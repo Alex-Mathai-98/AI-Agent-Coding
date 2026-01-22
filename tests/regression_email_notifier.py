@@ -80,12 +80,13 @@ def format_email(regression: dict, current: dict, previous: dict) -> tuple[str, 
     """Format email subject and body."""
     n_new = len(regression['new_failures'])
     n_total = len(regression['all_failures'])
+    project_name = os.environ.get("PROJECT_NAME", "Project")
 
     # Subject reflects severity
     if n_new > 0:
-        subject = f"[REGRESSION] Kernel Agent Tests: {n_new} new, {n_total} total failures"
+        subject = f"[REGRESSION] {project_name} Tests: {n_new} new, {n_total} total failures"
     else:
-        subject = f"[TEST FAILURES] Kernel Agent Tests: {n_total} failing"
+        subject = f"[TEST FAILURES] {project_name} Tests: {n_total} failing"
 
     lines = [
         "Test Report",
