@@ -3,8 +3,8 @@
 # Wrapper script for running tests via cron
 # This script handles environment setup and output redirection
 
-# Get the project root directory
-KAGENT_PATH="/home/alexmathai/development/Kernel_Playground/Kernel_Agent"
+# Get the project root directory (script is in tests/bash_files/, go up 2 levels)
+KAGENT_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd )"
 cd "$KAGENT_PATH" || exit 1
 
 # Load environment variables

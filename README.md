@@ -2,6 +2,25 @@
 
 A portable collection of Claude Code configurations, custom commands, and best practices. Clone this directly as your `.claude` folder in any project.
 
+## Folder Structure
+
+```
+your-project/
+├── .claude/
+│   ├── commands/
+│   ├── settings.json
+│   └── ...
+├── src/
+│   └── ... (your project files)
+├── tests/
+│   ├── bash_files/
+│   │   ├── run_all_tests.sh
+│   │   └── run_tests_cron.sh
+│   └── logs/
+├── CLAUDE.md
+└── pyproject.toml
+```
+
 ## Setup
 
 ```bash
@@ -11,7 +30,10 @@ cd ~/your-project
 # 2. Clone this repo as .claude
 git clone https://github.com/Alex-Mathai-98/AI-Agent-Coding.git .claude
 
-# 3. Update anytime
+# 3. Move the tests folder to project root (same level as .claude)
+mv .claude/tests .
+
+# 4. Update anytime
 cd .claude && git pull
 ```
 

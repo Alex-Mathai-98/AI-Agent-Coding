@@ -56,15 +56,8 @@ for test_file in $TEST_FILES; do
     echo "Running: $rel_path"
     echo "----------------------------------------"
 
-    # Set timeout based on test type (10 minutes for parallel tests, 5 minutes for others)
-    if [[ "$rel_path" == *"test_batch_processor_utility"* ]] || \
-       [[ "$rel_path" == *"test_tool_instrumentation"* ]] || \
-       [[ "$rel_path" == *"test_monolith_backward_compatibility"* ]] || \
-       [[ "$rel_path" == *"test_solution_minimization"* ]]; then
-        TIMEOUT=600  # 10 minutes for parallel tests
-    else
-        TIMEOUT=300  # 5 minutes for regular tests
-    fi
+    # Set timeout for tests (5 minutes)
+    TIMEOUT=300
 
     # Run the test with appropriate timeout
     timeout $TIMEOUT bash "$test_file"
