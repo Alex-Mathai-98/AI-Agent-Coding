@@ -1,6 +1,21 @@
-# AI-Agent-Coding
+# Claude Code Best Practices
 
+A portable collection of Claude Code configurations, custom commands, and best practices. Clone this directly as your `.claude` folder in any project.
 
+## Setup
+
+```bash
+# 1. Navigate to your project root
+cd ~/your-project
+
+# 2. Clone this repo as .claude
+git clone https://github.com/Alex-Mathai-98/AI-Agent-Coding.git .claude
+
+# 3. Update anytime
+cd .claude && git pull
+```
+
+---
 
 ### Claude Specific Notes
 
