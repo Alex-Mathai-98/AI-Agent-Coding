@@ -37,6 +37,55 @@ mv .claude/tests .
 cd .claude && git pull
 ```
 
+## Test Infrastructure Setup
+
+### 1. Set up the environment
+
+Run the prelude script from the project root:
+```bash
+source prelude.sh
+```
+
+### 2. Configure environment variables
+
+Edit `dev.env` in the project root and set the following variables for email notifications:
+
+```bash
+# Email notification settings (for regression_email_notifier.py)
+
+# Required - comma-separated recipient list
+EMAIL_RECIPIENTS="to1@gmail.com,to2@gmail.com"
+
+# Required - SMTP server settings
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT="587"
+SMTP_USER="from@gmail.com"
+SMTP_PASSWORD="<your-app-password>"
+
+# Project settings
+PROJECT_NAME="YOUR-PROJECT-NAME"
+```
+
+**Variable descriptions:**
+
+| Variable | Description |
+|----------|-------------|
+| `EMAIL_RECIPIENTS` | Comma-separated list of email addresses to receive test notifications |
+| `SMTP_HOST` | SMTP server hostname (e.g., `smtp.gmail.com` for Gmail) |
+| `SMTP_PORT` | SMTP port (typically `587` for TLS) |
+| `SMTP_USER` | Email account username for sending notifications |
+| `SMTP_PASSWORD` | App password or SMTP password (for Gmail, use an App Password) |
+| `PROJECT_NAME` | Project name displayed in email subjects (e.g., `[TEST FAILURES] MyProject Tests`) |
+
+### 3. Verify the setup
+
+Run the test suite to confirm everything works:
+```bash
+bash ./tests/run_tests_with_report.sh
+```
+
+This will run all tests and send email notifications if any failures occur.
+
 ---
 
 ### Claude Specific Notes
