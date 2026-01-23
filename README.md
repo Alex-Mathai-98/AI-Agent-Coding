@@ -580,6 +580,65 @@ Test a sound: `afplay /System/Library/Sounds/Hero.aiff`
 
 ---
 
+### Settings Precedence
+
+Claude Code uses a five-level scope system where **higher scopes override lower ones**:
+
+| Priority | Scope | Location |
+|----------|-------|----------|
+| 1 (lowest) | User | `~/.claude/settings.json` |
+| 2 | Project | `.claude/settings.json` (in project root) |
+| 3 | Local | `.claude/settings.local.json` (in project root) |
+| 4 | CLI args | Command line arguments |
+| 5 (highest) | Managed | System-deployed `managed-settings.json` |
+
+#### How This Applies to Your Setup
+
+| Scope | File | Description |
+|-------|------|-------------|
+| User | `~/.claude/settings.json` | Host-level settings (configured in Option 1 or 2 above) |
+| Project | `.claude/settings.json` | Project-specific settings (committed to git) |
+| Local | `.claude/settings.local.json` | Personal overrides (not committed to git) |
+
+**Rule:** Project-level takes precedence over host-level. If both define the same setting, the project setting wins.
+
+#### How Merging Works
+
+- **Settings are merged**, not completely replaced
+- If project settings don't specify something, user settings still apply
+- **Deny rules always win** over allow rules, even across scopes
+
+#### Hooks Behavior
+
+Hooks follow the same precedence:
+- Your host-level hooks (like notification sounds and ntfy.sh) will run **unless** a project-level hook overrides them for the same event
+- If a project defines a `Stop` hook, it replaces (not appends to) the user-level `Stop` hook
+
+#### Example: Local Overrides
+
+Create `.claude/settings.local.json` in a project for personal overrides that aren't committed to git:
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Custom notification for this project only'"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+This takes precedence over both user (`~/.claude/settings.json`) and project (`.claude/settings.json`) settings.
+
+---
+
 ### Claude Specific Notes
 
 The /command will list all the available commands that Claude provides – like /init etc.
