@@ -86,6 +86,354 @@ bash ./tests/run_tests_with_report.sh
 
 This will run all tests and send email notifications if any failures occur.
 
+## Enabling Notifications
+
+Get notified on your Mac when Claude Code completes a task. Choose the setup that matches your environment.
+
+---
+
+### Option 1: Local Mac + Remote Server (VS Code Remote SSH)
+
+**Use Case:** You're running Claude Code on a remote Linux server via VS Code's Remote SSH extension, and want notifications on your Mac laptop.
+
+#### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  LOCAL MAC              SSH (VS Code Remote)         REMOTE SERVER          │
+│  (Your Laptop)     ◄──────────────────────────►      (Linux)                │
+│                                                                             │
+│  • VS Code runs here                                 • Claude Code runs     │
+│  • LaunchAgent here                                    here                 │
+│  • Notifications                                     • Your code lives      │
+│    appear here                                         here                 │
+│         │                                                   │               │
+│         │ Listens to channel                 Posts to       │               │
+│         ▼                                    channel        ▼               │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │                        ntfy.sh (Cloud)                               │  │
+│  │                     Message Relay Service                            │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Key distinction:**
+
+| Machine | What it is | Terminal type |
+|---------|------------|---------------|
+| **Local Mac** | Your physical laptop sitting in front of you | Mac Terminal (Terminal.app, iTerm2) |
+| **Remote Server** | Linux server you SSH into | VS Code integrated terminal (runs on remote) |
+
+> **Important:** The VS Code integrated terminal runs commands **on the remote server**, not on your Mac.
+
+---
+
+#### Step A: Cloud Setup (ntfy.sh)
+
+Visit [ntfy.sh](https://ntfy.sh) and create a unique channel name (e.g., `my-claude-notifications-12345`).
+
+Keep this name private — anyone with the channel name can send/receive messages.
+
+---
+
+#### Step B: Local Mac Setup
+
+> **Where:** All commands in this section run in **Mac Terminal** (Terminal.app or iTerm2) — NOT the VS Code terminal
+
+**B1. Create the LaunchAgent plist file**
+
+```bash
+nano ~/Library/LaunchAgents/com.ntfy.listener.plist
+```
+
+Paste the following content (replace `YOUR-CHANNEL-NAME` with your actual channel):
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.ntfy.listener</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>while true; do curl -s "https://ntfy.sh/YOUR-CHANNEL-NAME/raw" | while read msg; do osascript -e "display notification \"$msg\" with title \"Claude Code\""; done; sleep 5; done</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/tmp/ntfy-listener.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/ntfy-listener.err</string>
+</dict>
+</plist>
+```
+
+**B2. Load the LaunchAgent**
+
+```bash
+# Load (starts immediately and on every login)
+launchctl load ~/Library/LaunchAgents/com.ntfy.listener.plist
+
+# Verify it's running
+launchctl list | grep ntfy
+```
+
+**B3. Useful commands**
+
+```bash
+# Unload (stop) the listener
+launchctl unload ~/Library/LaunchAgents/com.ntfy.listener.plist
+
+# Check logs if something isn't working
+cat /tmp/ntfy-listener.log
+cat /tmp/ntfy-listener.err
+```
+
+---
+
+#### Step C: Remote Server Setup
+
+> **Where:** All commands in this section run on the **Remote Server** — use VS Code's integrated terminal
+
+**C1. Create Claude Code settings file**
+
+Create/edit `~/.claude/settings.json` on the remote server:
+
+```bash
+mkdir -p ~/.claude
+nano ~/.claude/settings.json
+```
+
+Paste the following content (replace `YOUR-CHANNEL-NAME` with your actual channel):
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline-command.sh"
+  },
+  "alwaysThinkingEnabled": true,
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '\\a' > /dev/tty 2>/dev/null"
+          },
+          {
+            "type": "command",
+            "command": "curl -s -d 'Claude Code finished' ntfy.sh/YOUR-CHANNEL-NAME"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '\\a' > /dev/tty 2>/dev/null"
+          },
+          {
+            "type": "command",
+            "command": "curl -s -d 'Claude Code Notification' ntfy.sh/YOUR-CHANNEL-NAME"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+**C2. Create the statusline command script (optional)**
+
+If you want a custom status line showing the current directory, git branch, daily git stats, and model name, create `~/.claude/statusline-command.sh`:
+
+```bash
+nano ~/.claude/statusline-command.sh
+```
+
+Paste the following content:
+
+```bash
+#!/bin/bash
+
+# Read JSON input from stdin
+input=$(cat)
+
+# Get current working directory
+cwd=$(echo "$input" | jq -r '.workspace.current_dir')
+
+# Store original cwd for git operations before any modifications
+original_cwd="$cwd"
+
+# Contract home directory to ~ (tilde expansion)
+home_dir="$HOME"
+if [[ "$cwd" == "$home_dir"* ]]; then
+  cwd="~${cwd#$home_dir}"
+fi
+
+# Shorten intermediate directories (keep first char only, preserve first and last 2 segments)
+# Example: ~/development/long/tree/root/Kernel_Playground/Kernel_Agent -> ~/development/l/t/r/Kernel_Playground/Kernel_Agent
+shorten_path() {
+  local path="$1"
+  local prefix=""
+
+  # Handle ~ prefix
+  if [[ "$path" == "~"* ]]; then
+    prefix="~"
+    path="${path#\~}"
+  fi
+
+  # Split path into segments
+  IFS='/' read -ra segments <<< "$path"
+
+  # Remove empty first element (from leading /)
+  if [[ -z "${segments[0]}" ]]; then
+    segments=("${segments[@]:1}")
+  fi
+
+  local count=${#segments[@]}
+
+  # If 4 or fewer segments, no shortening needed
+  if [[ $count -le 4 ]]; then
+    echo "${prefix}${path}"
+    return
+  fi
+
+  # Keep first segment full, shorten middle segments, keep last 2 full
+  local result="${segments[0]}"
+  for ((i=1; i<count-2; i++)); do
+    result="$result/${segments[i]:0:1}"
+  done
+  result="$result/${segments[count-2]}/${segments[count-1]}"
+
+  echo "${prefix}/${result}"
+}
+
+cwd=$(shorten_path "$cwd")
+
+# Get model ID (extract just the id field if it's a JSON object/array)
+model=$(echo "$input" | jq -r '.model | if type == "array" then .[0].id elif type == "object" then .id else . end // empty')
+
+# Shorten common model names for display
+shorten_model() {
+  local m="$1"
+  case "$m" in
+    claude-opus-4-5-*) echo "Opus-4.5" ;;
+    claude-sonnet-4-5-*) echo "Sonnet-4.5" ;;
+    claude-sonnet-4-*) echo "Sonnet-4" ;;
+    claude-3-5-sonnet-*) echo "Sonnet-3.5" ;;
+    claude-3-opus-*) echo "Opus-3" ;;
+    claude-3-sonnet-*) echo "Sonnet-3" ;;
+    claude-3-haiku-*) echo "Haiku-3" ;;
+    *) echo "$m" ;;
+  esac
+}
+model=$(shorten_model "$model")
+
+# Get git branch name if in a git repository
+# Use --no-optional-locks to avoid lock contention
+# Use original_cwd (not shortened path) for actual git operations
+branch=$(cd "$original_cwd" 2>/dev/null && git --no-optional-locks rev-parse --abbrev-ref HEAD 2>/dev/null)
+
+# Get daily git statistics (lines added/removed today)
+git_stats=""
+if [ -n "$branch" ]; then
+  # Get today's date in the format git log uses
+  today=$(date +%Y-%m-%d)
+
+  # Count lines added and removed in commits from today
+  # Use --no-optional-locks to avoid lock contention
+  stats=$(cd "$original_cwd" 2>/dev/null && git --no-optional-locks log --since="$today 00:00:00" --until="$today 23:59:59" --pretty=tformat: --numstat 2>/dev/null | awk '{added+=$1; removed+=$2} END {printf "+%d/-%d", added, removed}')
+
+  if [ -n "$stats" ] && [ "$stats" != "+0/-0" ]; then
+    git_stats="$stats"
+  fi
+fi
+
+# Build status line
+# Current directory in bold blue
+status=$(printf '\033[01;34m%s\033[00m' "$cwd")
+
+# Add git branch in green if available
+if [ -n "$branch" ]; then
+  status="$status $(printf '\033[00;32m(%s)\033[00m' "$branch")"
+
+  # Add daily git stats in cyan if available
+  if [ -n "$git_stats" ]; then
+    status="$status $(printf '\033[00;36m[%s]\033[00m' "$git_stats")"
+  fi
+fi
+
+# Add model ID in magenta if available
+if [ -n "$model" ]; then
+  status="$status $(printf '\033[00;35m[%s]\033[00m' "$model")"
+fi
+
+echo "$status"
+```
+
+Make it executable:
+
+```bash
+chmod +x ~/.claude/statusline-command.sh
+```
+
+**What the statusline shows:**
+- **Current directory** (bold blue) - shortened for long paths
+- **Git branch** (green) - if in a git repo
+- **Daily git stats** (cyan) - lines added/removed today
+- **Model name** (magenta) - shortened model identifier
+
+**C3. What each hook does**
+
+| Hook | Trigger | Actions |
+|------|---------|---------|
+| `Stop` | Claude Code completes a task | 1. Rings terminal bell<br>2. Sends notification to ntfy.sh |
+| `Notification` | Claude Code sends a notification | 1. Rings terminal bell<br>2. Sends notification to ntfy.sh |
+
+**C4. Manual test (optional)**
+
+```bash
+# Send a test notification from the remote server
+curl -d "Test from remote server" ntfy.sh/YOUR-CHANNEL-NAME
+```
+
+---
+
+#### Test the Full Setup
+
+| Step | Location | Action |
+|------|----------|--------|
+| 1 | Local Mac | Verify listener: `launchctl list \| grep ntfy` |
+| 2 | Remote Server | Send test: `curl -d "Test" ntfy.sh/YOUR-CHANNEL-NAME` |
+| 3 | Local Mac | Confirm macOS notification appears |
+
+---
+
+#### How It Works
+
+```
+REMOTE SERVER                    ntfy.sh                     LOCAL MAC
+─────────────                    ───────                     ─────────
+Claude Code completes    ──►    Message stored    ──►    LaunchAgent receives
+        │                       in channel                      │
+        ▼                                                       ▼
+curl posts to channel           Cloud relay              osascript triggers
+                                service                  macOS notification
+```
+
+1. **Remote Server:** Claude Code hook sends a message via `curl` to ntfy.sh
+2. **ntfy.sh Cloud:** Message is stored and relayed to all channel listeners
+3. **Local Mac:** LaunchAgent receives the message and triggers macOS notification
+
 ---
 
 ### Claude Specific Notes
