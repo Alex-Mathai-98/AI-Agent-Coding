@@ -436,6 +436,150 @@ curl posts to channel           Cloud relay              osascript triggers
 
 ---
 
+### Option 2: Local Mac Only (VS Code on Local Folder)
+
+**Use Case:** You're running Claude Code directly on your Mac with VS Code open on a local folder. Everything runs on the same machine.
+
+#### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           LOCAL MAC (Your Laptop)                           │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │  VS Code                                                            │   │
+│  │  • Opens local folder                                               │   │
+│  │  • Integrated terminal runs Claude Code                             │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                    │                                        │
+│                                    │ Hook triggers on completion            │
+│                                    ▼                                        │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │  macOS Native                                                       │   │
+│  │  • afplay plays sound                                               │   │
+│  │  • osascript shows notification                                     │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Key point:** No cloud relay needed — everything happens locally on your Mac.
+
+---
+
+#### Setup
+
+> **Where:** All commands run in **Mac Terminal** (Terminal.app, iTerm2, or VS Code's integrated terminal — they're all on the same machine)
+
+**1. Create Claude Code settings file**
+
+Create/edit `~/.claude/settings.json`:
+
+```bash
+mkdir -p ~/.claude
+nano ~/.claude/settings.json
+```
+
+Paste the following content:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline-command.sh"
+  },
+  "alwaysThinkingEnabled": true,
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "afplay /System/Library/Sounds/Glass.aiff & osascript -e 'display notification \"Claude has finished\" with title \"Claude Code\"'"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "afplay /System/Library/Sounds/Glass.aiff & osascript -e 'display notification \"Claude needs your attention\" with title \"Claude Code\"'"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+**2. Create the statusline command script (optional)**
+
+If you want the custom status line, create `~/.claude/statusline-command.sh` with the same content as in Option 1 (see [Step C2 above](#c2-create-the-statusline-command-script-optional)).
+
+```bash
+chmod +x ~/.claude/statusline-command.sh
+```
+
+---
+
+#### What Each Hook Does
+
+| Hook | Trigger | Actions |
+|------|---------|---------|
+| `Stop` | Claude Code completes a task | 1. Plays Glass sound<br>2. Shows "Claude has finished" notification |
+| `Notification` | Claude Code sends a notification | 1. Plays Glass sound<br>2. Shows "Claude needs your attention" notification |
+
+---
+
+#### How It Works
+
+```
+LOCAL MAC
+─────────
+Claude Code completes
+        │
+        ▼
+Hook executes command
+        │
+        ├──► afplay plays /System/Library/Sounds/Glass.aiff
+        │
+        └──► osascript displays macOS notification
+```
+
+1. **Claude Code** finishes a task and triggers the `Stop` hook
+2. **afplay** plays the Glass sound effect (runs in background with `&`)
+3. **osascript** displays a native macOS notification
+
+---
+
+#### Available macOS Sounds
+
+You can change `Glass.aiff` to any of these built-in sounds:
+
+```
+/System/Library/Sounds/
+├── Basso.aiff
+├── Blow.aiff
+├── Bottle.aiff
+├── Frog.aiff
+├── Funk.aiff
+├── Glass.aiff      ← Default in config
+├── Hero.aiff
+├── Morse.aiff
+├── Ping.aiff
+├── Pop.aiff
+├── Purr.aiff
+├── Sosumi.aiff
+├── Submarine.aiff
+└── Tink.aiff
+```
+
+Test a sound: `afplay /System/Library/Sounds/Hero.aiff`
+
+---
+
 ### Claude Specific Notes
 
 The /command will list all the available commands that Claude provides – like /init etc.
