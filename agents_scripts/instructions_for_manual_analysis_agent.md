@@ -11,6 +11,7 @@ Before invoking the agent, ensure your data is structured as follows:
 * **Input Format**: Individual JSON files.
 * **Content**: Each file should represent a single "unit of analysis" containing all data points necessary for the agent to make a decision based on your provided logic.
 * **Consistency**: Ensure the fields you intend to analyze exist across all files in your chosen folder.
+* **Instruction File**: A file named `instructions.md` **must** exist in the parent directory of your data folder (sibling to the data folder). This file contains your classification labels and logic.
 
 > **Note:** The agent performs **1-to-1 analysis**. It does not look at other files in the directory during a single execution to maintain strict context isolation and data integrity.
 
@@ -20,10 +21,9 @@ Before invoking the agent, ensure your data is structured as follows:
 
 ### Step 1: Define Your Criteria
 
-Determine your **Labels** and the **Logic** you want Opus to follow.
+Write your labels and logic into the `instructions.md` file.
 
-* *Example Labels:* `[Approved, Rejected, Needs Review]`
-* *Example Logic:* "Label as 'Rejected' if the `total_cost` exceeds the `budget` field."
+* *Example:* "Compare the patches. Categories: [Identical, Superset, Subset, Different]. Logic: Ignore trivial edits like comments."
 
 ### Step 2: Execute Parallel Run
 
@@ -32,14 +32,13 @@ Run the command below. Replace `<PATH_TO_DATA_FOLDER>` with the path to the fold
 ```bash
 find <PATH_TO_DATA_FOLDER> -name "*.json" | while read -r file; do
     # Construct the expected sibling analysis file path
-    # This looks for the file in a sibling 'analysis_folder'
     analysis_file="${file%/*}/../analysis_folder/$(basename "${file%.json}")_analysis.json"
     
     # Only run Claude if the analysis file does NOT exist
     if [ ! -f "$analysis_file" ]; then
         echo "$file"
     fi
-done | xargs -n 1 -P 4 -I % sh -c 'claude m "@opus-manual-analysis analyze %: [INSERT LOGIC AND LABELS HERE]" > %.log 2>&1'
+done | xargs -n 1 -P 4 -I % sh -c 'claude m "@opus-manual-analysis analyze %" > %.log 2>&1'
 
 ```
 
@@ -53,6 +52,7 @@ The agent automatically manages the results to maintain a clean sibling director
 2. **Reasoning**: For every file, the agent generates a detailed, step-by-step explanation for the assigned category.
 3. **Result Files**: Successful analyses are saved to `<PATH_TO_PARENT>/analysis_folder/<original_id>_analysis.json`.
 4. **Execution Logs**: Individual logs (`<filename>.json.log`) are created in your **current terminal directory** to capture the process and errors.
+5. **Instruction Loading**: The agent automatically reads classification logic from `<PARENT_FOLDER>/instructions.md`.
 
 ---
 
