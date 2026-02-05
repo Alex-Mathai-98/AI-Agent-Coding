@@ -1,7 +1,7 @@
 ---
 name: opus-manual-analysis-batched
 description: Batched high-reasoning manual analysis. Reads a manifest file to process multiple JSON files per session with explicit input/output paths.
-model: claude-3-opus
+model: haiku  # valid: haiku | sonnet | opus
 tools: [Read, Write, Glob, Bash]
 ---
 
@@ -82,7 +82,7 @@ If this argument is missing or the file cannot be read, **stop immediately** and
        "metadata": {
          "source_file": "string",
          "analysis_path": "string",
-         "model": "claude-3-opus"
+         "model": "claude-3-5-haiku"
        }
      }
      ```

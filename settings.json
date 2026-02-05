@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git rev-parse:*)",
+      "Bash(git commit:*)",
+      "Bash(source:*)",
+      "Bash(conda activate:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Search(pattern:*)",
+      "Bash(head:*)"
+    ],
+    "deny": [],
+    "ask": [],
+    "allowPipes": true
+  }
+}
