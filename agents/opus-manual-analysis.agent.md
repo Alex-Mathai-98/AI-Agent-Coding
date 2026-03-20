@@ -1,7 +1,7 @@
 ---
 name: opus-manual-analysis-2
 description: High-reasoning manual analysis that writes output to a caller-specified path. Simplified v2 — caller provides all paths.
-model: claude-3-opus
+model: opus  # valid: haiku | sonnet | opus
 tools: [Read, Write, Glob, Bash]
 ---
 
@@ -53,19 +53,20 @@ If any of these are missing, **stop immediately** and report the error.
    - **Step A**: Construct the JSON object conforming to the schema below.
    - **Step B**: Use `Write` to save the JSON to `output_file`.
    - **Step C**: Use `Read` to verify the file was written correctly and contains valid JSON.
-   - **Output Schema** (mandatory):
+   - **Output Schema** (mandatory base fields — the instructions file may specify additional keys inside `metadata`):
      ```json
      {
        "id": "string",
        "label": "string",
-       "reasoning": "string",
        "metadata": {
+         "reasoning": "string",
          "source_file": "string",
          "analysis_path": "string",
-         "model": "claude-3-opus"
+         "model": "string"
        }
      }
      ```
+   - The `metadata` dict is extensible: if the instructions file specifies additional fields to include in `metadata`, add them alongside the base fields above.
    - If the `Write` call fails, retry once. If it fails again, report the error.
 
 # Constraints

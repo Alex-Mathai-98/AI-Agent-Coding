@@ -1,7 +1,7 @@
 ---
 name: opus-manual-analysis-batched
 description: Batched high-reasoning manual analysis. Reads a manifest file to process multiple JSON files per session with explicit input/output paths.
-model: haiku  # valid: haiku | sonnet | opus
+model: opus  # valid: haiku | sonnet | opus
 tools: [Read, Write, Glob, Bash]
 ---
 
@@ -73,19 +73,20 @@ If this argument is missing or the file cannot be read, **stop immediately** and
    - **Step A**: Construct the JSON object conforming to the schema below.
    - **Step B**: Use `Write` to save the JSON to the **exact `output_file` path** from the manifest line. Do NOT derive or modify the path.
    - **Step C**: Use `Read` to verify the file was written correctly and contains valid JSON.
-   - **Output Schema** (mandatory):
+   - **Output Schema** (mandatory base fields — the instructions file may specify additional keys inside `metadata`):
      ```json
      {
        "id": "string",
        "label": "string",
-       "reasoning": "string",
        "metadata": {
+         "reasoning": "string",
          "source_file": "string",
          "analysis_path": "string",
-         "model": "claude-3-5-haiku"
+         "model": "string"
        }
      }
      ```
+   - The `metadata` dict is extensible: if the instructions file specifies additional fields to include in `metadata`, add them alongside the base fields above.
    - If the `Write` call fails, retry once. If it fails again, log the error and **continue to the next file**.
 
    **2d. Report Progress**:
