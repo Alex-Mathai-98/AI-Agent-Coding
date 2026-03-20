@@ -50,10 +50,28 @@ Run the command below. Replace `<PATH_TO_DATA_FOLDER>` with the path to the fold
 DATA_FOLDER="<PATH_TO_DATA_FOLDER>"
 PARENT_FOLDER="$(dirname "$DATA_FOLDER")"
 INSTRUCTIONS_FILE="$PARENT_FOLDER/instructions.md"
+
+# AIDEV-NOTE: staleness guard — abort if instructions.md doesn't mention the current paths
+if [ ! -f "$INSTRUCTIONS_FILE" ]; then
+    echo "ERROR: Instructions file not found: $INSTRUCTIONS_FILE" >&2
+    exit 1
+fi
+_instructions_content="$(cat "$INSTRUCTIONS_FILE")"
+for _var_name in PARENT_FOLDER DATA_FOLDER INSTRUCTIONS_FILE; do
+    eval _var_val="\$$_var_name"
+    if ! grep -qF "$_var_val" <<< "$_instructions_content"; then
+        echo "ERROR: Stale instructions — $_var_name value not found in $INSTRUCTIONS_FILE" >&2
+        echo "  Expected to find: $_var_val" >&2
+        exit 1
+    fi
+done
+unset _instructions_content _var_name _var_val
+
 ANALYSIS_FOLDER="$PARENT_FOLDER/analysis_folder"
 BATCH_SIZE="${BATCH_SIZE:-5}"     # Files per session (default 5)
 MAX_FILES="${MAX_FILES:-0}"       # 0 = no limit; set to N to process at most N files
 PARALLEL="${PARALLEL:-4}"         # Parallel sessions (default 4)
+MODEL="${MODEL:-opus}"            # valid: haiku | sonnet | opus
 mkdir -p "$ANALYSIS_FOLDER"
 mkdir -p "$PARENT_FOLDER/logs"
 mkdir -p "$PARENT_FOLDER/manifests"
@@ -107,7 +125,7 @@ done | xargs -P "$PARALLEL" -I % bash -c '
     logfile="'"$PARENT_FOLDER"'/logs/batch_${batch_id}.log"
     readable_logfile="'"$PARENT_FOLDER"'/logs/batch_${batch_id}.readable.log"
 
-    claude --verbose --agent opus-manual-analysis-batched --output-format stream-json -p "manifest_file: $manifest_path" > "$logfile" 2>&1
+    claude --verbose --model '"$MODEL"' --agent opus-manual-analysis-batched --output-format stream-json -p "manifest_file: $manifest_path" > "$logfile" 2>&1
 
     # AIDEV-NOTE: post-process JSONL into human-readable log
     jq -r '"'"'
@@ -141,6 +159,7 @@ done | xargs -P "$PARALLEL" -I % bash -c '
 | `BATCH_SIZE` | 5       | Number of files per agent session                   |
 | `MAX_FILES`  | 0       | Cap on total files to process (0 = unlimited)       |
 | `PARALLEL`   | 4       | Number of concurrent agent sessions                 |
+| `MODEL`      | opus    | Claude model to use (haiku, sonnet, opus)           |
 
 ```bash
 # Example: 8 files per batch, 2 parallel sessions, max 50 files
