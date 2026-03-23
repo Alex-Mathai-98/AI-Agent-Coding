@@ -23,5 +23,6 @@ Construct a single `git add` command string that includes all identified file pa
 Write this command string into a new text file named **`git_stage_command.txt`**.
 * **Do not** execute the command.
 * **Do not** include any other text, markdown, or explanations inside the text file—only the raw command.
+* **Ensure the file ends with a trailing newline character** to avoid zsh displaying a `%` marker.
 
 Once created, confirm the file exists and display the content of the command here in the chat for review.
