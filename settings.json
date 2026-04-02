@@ -22,7 +22,6 @@
         "hooks": [
           {
             "type": "command",
-            "if": "Bash(git commit*)",
             "command": "bash .claude/hooks/check-agents-md.sh"
           }
         ]

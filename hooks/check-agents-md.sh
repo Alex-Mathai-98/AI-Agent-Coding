@@ -15,8 +15,8 @@ INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)
 [ -z "$COMMAND" ] && exit 0
 
-# Only trigger on git commit commands (not git add, git diff, etc.)
-echo "$COMMAND" | grep -qE '^\s*git\s+commit' || exit 0
+# Only trigger on commands that contain git commit (handles compound commands like "git add && git commit")
+echo "$COMMAND" | grep -qE 'git\s+commit' || exit 0
 
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
 
@@ -65,41 +65,33 @@ done
 
 if [ ${#UNSTAGED_AGENTS[@]} -gt 0 ]; then
     FOUND_ISSUES=true
-    echo "================================================================"
-    echo "CHECK 1: AGENTS.md UPDATE CHECK"
-    echo "================================================================"
-    echo ""
-    echo "The following AGENTS.md files cover directories with modified code"
-    echo "but were NOT updated in this commit:"
-    echo ""
+    echo "================================================================" >&2
+    echo "CHECK 1: AGENTS.md UPDATE CHECK" >&2
+    echo "" >&2
+    echo "The following AGENTS.md files cover directories with modified code" >&2
+    echo "but were NOT updated in this commit:" >&2
+    echo "" >&2
     for agents_file in "${UNSTAGED_AGENTS[@]}"; do
-        echo "  * $agents_file"
-        echo "    (covers changes in: ${AGENTS_MAP[$agents_file]})"
+        echo "  * $agents_file" >&2
+        echo "    (covers changes in: ${AGENTS_MAP[$agents_file]})" >&2
     done
-    echo ""
+    echo "" >&2
 fi
 
 # ============================================================
-# CHECK 2: Missing AGENTS.md — directory has >=5 files, no AGENTS.md in tree
+# CHECK 2: Missing AGENTS.md — directory has >=5 files, no AGENTS.md in its own dir
+# AIDEV-NOTE: Per Anthropic best practices, each significant subdirectory should
+# have its own AGENTS.md even if a parent has one. Only check the immediate directory.
 # ============================================================
 MISSING_AGENTS=()
 for dir in "${!SEEN_DIRS[@]}"; do
     full_dir="$REPO_ROOT/$dir"
     [ -d "$full_dir" ] || continue
 
-    # Walk up to see if any ancestor (up to repo root) has an AGENTS.md
-    found=false
-    current="$dir"
-    while [ "$current" != "." ] && [ "$current" != "/" ]; do
-        if [ -f "$REPO_ROOT/$current/AGENTS.md" ]; then
-            found=true
-            break
-        fi
-        current=$(dirname "$current")
-    done
-    $found && continue
+    # Check if this directory itself has an AGENTS.md
+    [ -f "$full_dir/AGENTS.md" ] && continue
 
-    # No AGENTS.md found — check file count in this directory
+    # No AGENTS.md in this directory — check file count
     file_count=$(find "$full_dir" -maxdepth 1 -type f | wc -l)
     if [ "$file_count" -ge 5 ]; then
         MISSING_AGENTS+=("$dir (${file_count} files)")
@@ -108,17 +100,16 @@ done
 
 if [ ${#MISSING_AGENTS[@]} -gt 0 ]; then
     FOUND_ISSUES=true
-    echo "================================================================"
-    echo "CHECK 2: MISSING AGENTS.md CHECK"
-    echo "================================================================"
-    echo ""
-    echo "The following directories have 5 or more files but NO AGENTS.md"
-    echo "anywhere in their directory tree:"
-    echo ""
+    echo "================================================================" >&2
+    echo "CHECK 2: MISSING AGENTS.md CHECK" >&2
+    echo "" >&2
+    echo "The following directories have 5 or more files but NO AGENTS.md" >&2
+    echo "anywhere in their directory tree:" >&2
+    echo "" >&2
     for entry in "${MISSING_AGENTS[@]}"; do
-        echo "  * $entry"
+        echo "  * $entry" >&2
     done
-    echo ""
+    echo "" >&2
 fi
 
 # If no issues found, allow the commit
@@ -127,15 +118,15 @@ $FOUND_ISSUES || exit 0
 # ============================================================
 # Summary
 # ============================================================
-echo "================================================================"
-echo "Modified files in this commit:"
-echo "$STAGED_FILES" | sed 's/^/  - /'
-echo ""
-echo "ACTION: Ask the user about each finding above before proceeding"
-echo "with the commit. For CHECK 1, ask if they want to update the"
-echo "AGENTS.md. For CHECK 2, ask if they want to generate a new"
-echo "AGENTS.md per CLAUDE.md (Sections 5 & 6)."
-echo "================================================================"
+echo "================================================================" >&2
+echo "Modified files in this commit:" >&2
+echo "$STAGED_FILES" | sed 's/^/  - /' >&2
+echo "" >&2
+echo "ACTION: Ask the user about each finding above before proceeding" >&2
+echo "with the commit. For CHECK 1, ask if they want to update the" >&2
+echo "AGENTS.md. For CHECK 2, ask if they want to generate a new" >&2
+echo "AGENTS.md per CLAUDE.md (Sections 5 & 6)." >&2
+echo "================================================================" >&2
 
 # AIDEV-NOTE: exit 2 blocks the git commit via PreToolUse, forcing the LLM to address this first
 exit 2
