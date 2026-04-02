@@ -7,7 +7,11 @@ A portable collection of Claude Code configurations, custom commands, and best p
 ```
 your-project/
 ├── .claude/
+│   ├── agents/                  # Custom agent definitions (.agent.md)
+│   ├── agents_scripts/          # Instructions for custom agents
 │   ├── commands/
+│   ├── hooks/                   # Hook scripts (e.g., check-agents-md.sh)
+│   ├── skills/                  # Custom slash command skills
 │   ├── settings.json
 │   └── ...
 ├── src/
@@ -85,6 +89,44 @@ bash ./tests/run_tests_with_report.sh
 ```
 
 This will run all tests and send email notifications if any failures occur.
+
+## Custom Skills, Agents, and Scripts
+
+This `.claude` repo ships with custom slash-command skills (invoked via `/skill-name`), custom agents (spawned automatically by Claude), and agent instruction scripts.
+
+### Skills (`skills/`)
+
+| Skill | Command | Description |
+|-------|---------|-------------|
+| **cpl** | `/cpl` | Create a human-like code implementation plan |
+| **cim** | `/cim` | Implement code based on a code plan |
+| **ct** | `/ct` | Generate or modify tests based on a plan or instructions |
+| **tests** | `/tests` | Auto-generate comprehensive test suites with framework integration |
+| **debug** | `/debug` | Intelligent debugging with root cause analysis and fix generation |
+| **review** | `/review` | Code review for security, performance, and quality improvements |
+| **refactor** | `/refactor` | Intelligent code refactoring with multiple strategies and safety checks |
+| **explain** | `/explain` | Comprehensive code explanations with diagrams and execution flow |
+| **docs** | `/docs` | Generate comprehensive documentation, API specs, and tutorials |
+| **code-viz** | `/code-viz` | Generate function flow diagrams for code visualization |
+| **ga** | `/ga` | Generate `git add` command from recent conversation context |
+| **gsc** | `/gsc` | Smart git commit and push with auto-generated commit message |
+| **archive** | `/archive` | Archive plan files by renaming and moving them to `claude_plans/` |
+
+### Custom Agents (`agents/`)
+
+| Agent | Model | Description |
+|-------|-------|-------------|
+| **opus-manual-analysis-2** | Opus | High-reasoning manual analysis that writes output to a caller-specified path |
+| **opus-manual-analysis-batched** | Opus | Batched high-reasoning manual analysis — reads a manifest file to process multiple JSON files per session |
+
+### Agent Scripts (`agents_scripts/`)
+
+Markdown instruction files that provide detailed prompts and guidelines for the custom agents above:
+
+- `instructions_for_manual_analysis_agent.md` — Instructions for the single-file manual analysis agent
+- `instructions_for_manual_analysis_batched_agent.md` — Instructions for the batched manual analysis agent
+
+---
 
 ## Enabling Notifications
 
@@ -219,6 +261,17 @@ Paste the following content (replace `YOUR-CHANNEL-NAME` with your actual channe
   },
   "alwaysThinkingEnabled": true,
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/check-agents-md.sh"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
@@ -396,6 +449,7 @@ chmod +x ~/.claude/statusline-command.sh
 
 | Hook | Trigger | Actions |
 |------|---------|---------|
+| `PreToolUse` | Before any Bash tool call matching `git commit` | Runs `check-agents-md.sh` — blocks commit if AGENTS.md issues found (see [PreToolUse Hook Details](#pretooluse-hook-check-agents-mdsh)) |
 | `Stop` | Claude Code completes a task | 1. Rings terminal bell<br>2. Sends notification to ntfy.sh |
 | `Notification` | Claude Code sends a notification | 1. Rings terminal bell<br>2. Sends notification to ntfy.sh |
 
@@ -490,6 +544,17 @@ Paste the following content:
   },
   "alwaysThinkingEnabled": true,
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/check-agents-md.sh"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
@@ -528,6 +593,7 @@ chmod +x ~/.claude/statusline-command.sh
 
 | Hook | Trigger | Actions |
 |------|---------|---------|
+| `PreToolUse` | Before any Bash tool call matching `git commit` | Runs `check-agents-md.sh` — blocks commit if AGENTS.md issues found (see [PreToolUse Hook Details](#pretooluse-hook-check-agents-mdsh)) |
 | `Stop` | Claude Code completes a task | 1. Plays Glass sound<br>2. Shows "Claude has finished" notification |
 | `Notification` | Claude Code sends a notification | 1. Plays Glass sound<br>2. Shows "Claude needs your attention" notification |
 
@@ -577,6 +643,30 @@ You can change `Glass.aiff` to any of these built-in sounds:
 ```
 
 Test a sound: `afplay /System/Library/Sounds/Hero.aiff`
+
+---
+
+### PreToolUse Hook: check-agents-md.sh
+
+This project-level hook (defined in `.claude/settings.json`) runs before every Bash tool call and specifically targets `git commit` commands. It enforces AGENTS.md documentation hygiene.
+
+**Location:** `.claude/hooks/check-agents-md.sh`
+
+**How it works:**
+
+| Check | What it detects | Action |
+|-------|----------------|--------|
+| **Check 1: Stale AGENTS.md** | An AGENTS.md covers directories with modified files, but was not updated in the commit | Lists the stale AGENTS.md files and which directories they cover |
+| **Check 2: Missing AGENTS.md** | A modified directory has ≥5 files but no AGENTS.md anywhere up its directory tree | Lists directories that should have an AGENTS.md |
+
+If either check finds issues, the hook exits with code 2, which **blocks the commit** via the `PreToolUse` mechanism. Claude is then prompted to address the findings before retrying.
+
+**Skipping the hook:**
+
+```bash
+# Set this environment variable to bypass the check
+export SKIP_AGENTS_CHECK=1
+```
 
 ---
 
