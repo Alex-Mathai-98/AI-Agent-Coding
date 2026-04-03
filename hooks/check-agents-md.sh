@@ -18,6 +18,11 @@ COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)
 # Only trigger on commands that contain git commit (handles compound commands like "git add && git commit")
 echo "$COMMAND" | grep -qE 'git\s+commit' || exit 0
 
+# AIDEV-NOTE: Allow skipping via command prefix (e.g. "SKIP_AGENTS_CHECK=1 git commit ...")
+# Since this hook runs as a PreToolUse subprocess, env vars from the bash command
+# don't propagate. Instead, parse the command string for the skip flag.
+echo "$COMMAND" | grep -qE 'SKIP_AGENTS_CHECK=1' && exit 0
+
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
 
 # Prefer staged files; fall back to all modified tracked files
