@@ -2,12 +2,9 @@
 # AIDEV-NOTE: PreToolUse hook — fires before git commit to:
 #   1. Warn about stale AGENTS.md files covering modified directories
 #   2. Flag directories with >=5 files but no AGENTS.md anywhere up the tree
-# Reads tool input JSON from stdin. Exits 2 to block commit if issues found.
+# Outputs permissionDecision: "ask" to delegate approval to the user when issues found.
 
 set -euo pipefail
-
-# AIDEV-NOTE: skip hook if user already declined the AGENTS.md update/creation
-[ "${SKIP_AGENTS_CHECK:-0}" = "1" ] && exit 0
 
 INPUT=$(cat)
 
@@ -18,18 +15,12 @@ COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)
 # Only trigger on commands that contain git commit (handles compound commands like "git add && git commit")
 echo "$COMMAND" | grep -qE 'git\s+commit' || exit 0
 
-# AIDEV-NOTE: Allow skipping via command prefix (e.g. "SKIP_AGENTS_CHECK=1 git commit ...")
-# Since this hook runs as a PreToolUse subprocess, env vars from the bash command
-# don't propagate. Instead, parse the command string for the skip flag.
-echo "$COMMAND" | grep -qE 'SKIP_AGENTS_CHECK=1' && exit 0
 
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
 
-# Prefer staged files; fall back to all modified tracked files
+# AIDEV-NOTE: Only check staged files. If nothing is staged, git commit will
+# fail on its own — no need for the hook to fall back to unstaged files.
 STAGED_FILES=$(git diff --cached --name-only 2>/dev/null)
-if [ -z "$STAGED_FILES" ]; then
-    STAGED_FILES=$(git diff --name-only 2>/dev/null)
-fi
 [ -z "$STAGED_FILES" ] && exit 0
 
 # Collect unique directories that contain changed files
@@ -40,11 +31,15 @@ while IFS= read -r file; do
 done <<< "$STAGED_FILES"
 
 FOUND_ISSUES=false
+REASON_LINES=""
 
 # ============================================================
 # CHECK 1: Stale AGENTS.md — exists but not updated
 # ============================================================
+# AIDEV-NOTE: Two maps — AGENTS_MAP groups dirs by AGENTS.md file,
+# FILE_TO_AGENTS maps each staged file to its covering AGENTS.md.
 declare -A AGENTS_MAP  # agents_file -> list of source dirs
+declare -A FILE_TO_AGENTS  # staged_file -> covering agents_file
 for dir in "${!SEEN_DIRS[@]}"; do
     current="$dir"
     while [ "$current" != "." ] && [ "$current" != "/" ]; do
@@ -55,6 +50,13 @@ for dir in "${!SEEN_DIRS[@]}"; do
             else
                 AGENTS_MAP["$candidate"]="${AGENTS_MAP[$candidate]}, $dir"
             fi
+            # Map each staged file in this dir to its AGENTS.md
+            while IFS= read -r staged_file; do
+                file_dir=$(dirname "$staged_file")
+                if [ "$file_dir" = "$dir" ]; then
+                    FILE_TO_AGENTS["$staged_file"]="$candidate"
+                fi
+            done <<< "$STAGED_FILES"
             break
         fi
         current=$(dirname "$current")
@@ -70,6 +72,7 @@ done
 
 if [ ${#UNSTAGED_AGENTS[@]} -gt 0 ]; then
     FOUND_ISSUES=true
+    REASON_LINES+="[Stale AGENTS.md]\\n"
     echo "================================================================" >&2
     echo "CHECK 1: AGENTS.md UPDATE CHECK" >&2
     echo "" >&2
@@ -79,6 +82,17 @@ if [ ${#UNSTAGED_AGENTS[@]} -gt 0 ]; then
     for agents_file in "${UNSTAGED_AGENTS[@]}"; do
         echo "  * $agents_file" >&2
         echo "    (covers changes in: ${AGENTS_MAP[$agents_file]})" >&2
+    done
+    # Build reason with file -> AGENTS.md causation
+    for staged_file in "${!FILE_TO_AGENTS[@]}"; do
+        covering="${FILE_TO_AGENTS[$staged_file]}"
+        # Only include if the covering AGENTS.md is in the unstaged list
+        for unstaged in "${UNSTAGED_AGENTS[@]}"; do
+            if [ "$covering" = "$unstaged" ]; then
+                REASON_LINES+="  $staged_file -> $covering\\n"
+                break
+            fi
+        done
     done
     echo "" >&2
 fi
@@ -105,6 +119,7 @@ done
 
 if [ ${#MISSING_AGENTS[@]} -gt 0 ]; then
     FOUND_ISSUES=true
+    REASON_LINES+="[Missing AGENTS.md]\\n"
     echo "================================================================" >&2
     echo "CHECK 2: MISSING AGENTS.md CHECK" >&2
     echo "" >&2
@@ -112,6 +127,7 @@ if [ ${#MISSING_AGENTS[@]} -gt 0 ]; then
     echo "anywhere in their directory tree:" >&2
     echo "" >&2
     for entry in "${MISSING_AGENTS[@]}"; do
+        REASON_LINES+="  - $entry\\n"
         echo "  * $entry" >&2
     done
     echo "" >&2
@@ -133,5 +149,9 @@ echo "AGENTS.md. For CHECK 2, ask if they want to generate a new" >&2
 echo "AGENTS.md per CLAUDE.md (Sections 5 & 6)." >&2
 echo "================================================================" >&2
 
-# AIDEV-NOTE: exit 2 blocks the git commit via PreToolUse, forcing the LLM to address this first
-exit 2
+# AIDEV-NOTE: permissionDecision "ask" delegates to the user — they see the
+# warnings above and approve/deny interactively. The LLM cannot bypass this.
+cat <<EOF
+{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "ask", "permissionDecisionReason": "${REASON_LINES}Approve to commit as-is, or deny to fix first."}}
+EOF
+exit 0
