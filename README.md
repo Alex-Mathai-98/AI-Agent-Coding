@@ -110,7 +110,27 @@ This `.claude` repo ships with custom slash-command skills (invoked via `/skill-
 | **code-viz** | `/code-viz` | Generate function flow diagrams for code visualization |
 | **ga** | `/ga` | Generate `git add` command from recent conversation context |
 | **gsc** | `/gsc` | Smart git commit and push with auto-generated commit message |
+| **gh-daily** | `/gh-daily` | Generate standup/weekly reports from GitHub Issues, PRs, and git history |
 | **archive** | `/archive` | Archive plan files by renaming and moving them to `claude_plans/` |
+
+#### Quick Examples
+
+| Command | Example | Description |
+|---------|---------|-------------|
+| `/cpl` | | |
+| `/cim` | | |
+| `/ct` | | |
+| `/tests` | | |
+| `/debug` | | |
+| `/review` | | |
+| `/refactor` | | |
+| `/explain` | | |
+| `/docs` | | |
+| `/code-viz` | | |
+| `/ga` | | |
+| `/gsc` | | |
+| `/gh-daily` | `/gh-daily --since 2026-03-28 --format detailed` | Weekly report from a specific date, full detail |
+| `/archive` | | |
 
 ### Custom Agents (`agents/`)
 
