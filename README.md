@@ -473,7 +473,7 @@ chmod +x ~/.claude/statusline-command.sh
 
 | Hook | Trigger | Actions |
 |------|---------|---------|
-| `PreToolUse` | Before any Bash tool call matching `git commit` | Runs `check-agents-md.sh` — blocks commit if AGENTS.md issues found (see [PreToolUse Hook Details](#pretooluse-hook-check-agents-mdsh)) |
+| `PreToolUse` | Before any Bash tool call matching `git commit` | 1. Runs `check-agents-md.sh` — blocks commit if AGENTS.md issues found (see [PreToolUse Hook Details](#pretooluse-hook-check-agents-mdsh))<br>2. Runs `check-architecture-md.sh` — blocks commit if architecture.md missing in dirs with ≥8 files (see [PreToolUse Hook Details](#pretooluse-hook-check-architecture-mdsh)) |
 | `Stop` | Claude Code completes a task | 1. Rings terminal bell<br>2. Sends notification to ntfy.sh |
 | `Notification` | Claude Code sends a notification | 1. Rings terminal bell<br>2. Sends notification to ntfy.sh |
 
@@ -617,7 +617,7 @@ chmod +x ~/.claude/statusline-command.sh
 
 | Hook | Trigger | Actions |
 |------|---------|---------|
-| `PreToolUse` | Before any Bash tool call matching `git commit` | Runs `check-agents-md.sh` — blocks commit if AGENTS.md issues found (see [PreToolUse Hook Details](#pretooluse-hook-check-agents-mdsh)) |
+| `PreToolUse` | Before any Bash tool call matching `git commit` | 1. Runs `check-agents-md.sh` — blocks commit if AGENTS.md issues found (see [PreToolUse Hook Details](#pretooluse-hook-check-agents-mdsh))<br>2. Runs `check-architecture-md.sh` — blocks commit if architecture.md missing in dirs with ≥8 files (see [PreToolUse Hook Details](#pretooluse-hook-check-architecture-mdsh)) |
 | `Stop` | Claude Code completes a task | 1. Plays Glass sound<br>2. Shows "Claude has finished" notification |
 | `Notification` | Claude Code sends a notification | 1. Plays Glass sound<br>2. Shows "Claude needs your attention" notification |
 
@@ -690,6 +690,29 @@ If either check finds issues, the hook exits with code 2, which **blocks the com
 ```bash
 # Set this environment variable to bypass the check
 export SKIP_AGENTS_CHECK=1
+```
+
+---
+
+### PreToolUse Hook: check-architecture-md.sh
+
+This project-level hook (defined in `.claude/settings.json`) runs before every Bash tool call and specifically targets `git commit` commands. It encourages architecture documentation for significant directories.
+
+**Location:** `.claude/hooks/check-architecture-md.sh`
+
+**How it works:**
+
+| Check | What it detects | Action |
+|-------|----------------|--------|
+| **Check 1: Stale architecture.md** | An `architecture.md` covers directories with modified files, but was not updated in the commit | Lists the stale `architecture.md` files and which directories they cover |
+| **Check 2: Missing architecture.md** | A modified directory has ≥8 files but no `architecture.md` in it | Lists directories that should have an `architecture.md` |
+
+If either check finds issues, the hook uses `permissionDecision: "ask"` to **block the commit** — the user must explicitly approve to proceed, or deny to update/generate docs first.
+
+**Example suggestion:**
+
+```
+/arch-diagram for src/Kernel_Agent/tools
 ```
 
 ---
