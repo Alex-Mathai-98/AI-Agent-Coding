@@ -44,7 +44,7 @@
 
 ### Core Components
 
-#### {{COMPONENT_1_NAME}}
+#### 1. {{COMPONENT_1_NAME}}
 
 {{COMPONENT_1_DESCRIPTION}}
 
@@ -63,7 +63,7 @@
 - [External dependencies]
 - [Internal dependencies]
 
-#### {{COMPONENT_2_NAME}}
+#### 2. {{COMPONENT_2_NAME}}
 
 {{COMPONENT_2_DESCRIPTION}}
 
@@ -82,7 +82,7 @@
 - [External dependencies]
 - [Internal dependencies]
 
-#### {{COMPONENT_3_NAME}}
+#### 3. {{COMPONENT_3_NAME}}
 
 {{COMPONENT_3_DESCRIPTION}}
 

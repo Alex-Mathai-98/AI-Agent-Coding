@@ -150,6 +150,8 @@ All diagrams use Mermaid syntax in markdown code blocks. The output document sho
 
 Use `graph TD`, `graph LR`, `graph TB`, `sequenceDiagram`, or `flowchart TD` as appropriate for each diagram type.
 
+Use hierarchical numbering for all component subsections (e.g., `#### 1. ComponentName`, `#### 2. ComponentName`). Number sequentially starting from 1.
+
 ## Notes
 
 - For function-level flow diagrams, use `/code-viz` instead (complementary skill)
