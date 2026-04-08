@@ -111,6 +111,8 @@ This `.claude` repo ships with custom slash-command skills (invoked via `/skill-
 | **ga** | `/ga` | Generate `git add` command from recent conversation context |
 | **gsc** | `/gsc` | Smart git commit and push with auto-generated commit message |
 | **gh-daily** | `/gh-daily` | Generate standup/weekly reports from GitHub Issues, PRs, and git history |
+| **arch-diagram** | `/arch-diagram` | Generate system architecture diagrams (C4, component, security, deployment, dependency) using Mermaid |
+| **er-diagram** | `/er-diagram` | Generate entity-relationship diagrams from database models and ORM definitions |
 | **archive** | `/archive` | Archive plan files by renaming and moving them to `claude_plans/` |
 
 #### Quick Examples
@@ -130,6 +132,8 @@ This `.claude` repo ships with custom slash-command skills (invoked via `/skill-
 | `/ga` | | |
 | `/gsc` | | |
 | `/gh-daily` | `/gh-daily --since 2026-03-28 --format detailed` | Weekly report from a specific date, full detail |
+| `/arch-diagram` | | |
+| `/er-diagram` | | |
 | `/archive` | | |
 
 ### Custom Agents (`agents/`)
