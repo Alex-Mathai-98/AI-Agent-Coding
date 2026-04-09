@@ -22,6 +22,13 @@ This document describes the core data model and entity relationships for {{PROJE
 ## Entity Relationship Diagram
 
 ```mermaid
+---
+config:
+    layout: elk
+    elk:
+        nodePlacementStrategy: BRANDES_KOEPF
+        mergeEdges: false
+---
 erDiagram
 {{ER_DIAGRAM_CONTENT}}
 ```

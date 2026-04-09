@@ -9,6 +9,13 @@
 ## Entity Relationship Diagram
 
 ```mermaid
+---
+config:
+    layout: elk
+    elk:
+        nodePlacementStrategy: BRANDES_KOEPF
+        mergeEdges: false
+---
 erDiagram
 {{ER_DIAGRAM_CONTENT}}
 ```

@@ -11,6 +11,13 @@ This document provides the entity relationship diagram for {{PROJECT_NAME}} data
 ### Entity Relationship Diagram
 
 ```mermaid
+---
+config:
+    layout: elk
+    elk:
+        nodePlacementStrategy: BRANDES_KOEPF
+        mergeEdges: false
+---
 erDiagram
     %% Example entities - replace with actual database entities
     USER {

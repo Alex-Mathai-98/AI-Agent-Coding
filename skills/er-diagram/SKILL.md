@@ -87,7 +87,28 @@ You are a database documentation expert. When this skill is invoked:
 
 ## Mermaid ER Syntax Reference
 
+Always include this config block at the top of the erDiagram mermaid block:
+
+```yaml
+---
+config:
+    layout: elk
+    elk:
+        nodePlacementStrategy: BRANDES_KOEPF
+        mergeEdges: false
+---
+```
+
+Example:
+
 ```mermaid
+---
+config:
+    layout: elk
+    elk:
+        nodePlacementStrategy: BRANDES_KOEPF
+        mergeEdges: false
+---
 erDiagram
     USER ||--o{ ORDER : "places"
     USER {
