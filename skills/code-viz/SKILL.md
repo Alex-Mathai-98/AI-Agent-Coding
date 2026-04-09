@@ -90,6 +90,13 @@ Analyze the user's code and create a clear, visual flowchart showing:
 For code with `main()` calling `process_data()` twice and `save_results()`:
 
 ```mermaid
+---
+config:
+  layout: elk
+  elk:
+    nodePlacementStrategy: BRANDES_KOEPF
+    mergeEdges: false
+---
 flowchart TD
     F0["1. main"]
     F1["2. process_data"]

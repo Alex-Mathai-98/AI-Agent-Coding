@@ -13,6 +13,13 @@ This document provides a visual representation of the system components and thei
 ## Component Architecture
 
 ```mermaid
+---
+config:
+  layout: elk
+  elk:
+    nodePlacementStrategy: BRANDES_KOEPF
+    mergeEdges: false
+---
 graph TB
     subgraph "Presentation Layer"
         UI[User Interface]
@@ -149,6 +156,13 @@ sequenceDiagram
 ## Deployment Architecture
 
 ```mermaid
+---
+config:
+  layout: elk
+  elk:
+    nodePlacementStrategy: BRANDES_KOEPF
+    mergeEdges: false
+---
 graph LR
     subgraph "Production Environment"
         LB[Load Balancer]
@@ -181,6 +195,13 @@ graph LR
 ### Internal Dependencies
 
 ```mermaid
+---
+config:
+  layout: elk
+  elk:
+    nodePlacementStrategy: BRANDES_KOEPF
+    mergeEdges: false
+---
 graph TD
     {{INTERNAL_DEPENDENCIES}}
 ```

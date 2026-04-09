@@ -264,6 +264,13 @@ The `UserProfile` component is a **React functional component** that displays an
 ## 🏗️ Architecture Diagram
 
 ```mermaid
+---
+config:
+  layout: elk
+  elk:
+    nodePlacementStrategy: BRANDES_KOEPF
+    mergeEdges: false
+---
 graph TD
     A[UserProfile Component] --> B[State Management]
     A --> C[Data Fetching]
@@ -497,6 +504,13 @@ const { currentUser, hasPermission } = useAuth();
 ## 🔄 Data Flow Diagram
 
 ```mermaid
+---
+config:
+  layout: elk
+  elk:
+    nodePlacementStrategy: BRANDES_KOEPF
+    mergeEdges: false
+---
 flowchart LR
     A[Props: userId] --> B[useEffect]
     B --> C[fetchUserData API]
