@@ -34,6 +34,15 @@
             "command": "bash .claude/hooks/check-architecture-md.sh"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/check-claude-md-for-agents.sh"
+          }
+        ]
       }
     ],
     "Stop": [
