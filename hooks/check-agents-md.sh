@@ -110,8 +110,8 @@ for dir in "${!SEEN_DIRS[@]}"; do
     # Check if this directory itself has an AGENTS.md
     [ -f "$full_dir/AGENTS.md" ] && continue
 
-    # No AGENTS.md in this directory — check file count
-    file_count=$(find "$full_dir" -maxdepth 1 -type f | wc -l)
+    # No AGENTS.md in this directory — count code files only (.py, .sh)
+    file_count=$(find "$full_dir" -maxdepth 1 -type f \( -name '*.py' -o -name '*.sh' \) | wc -l)
     if [ "$file_count" -ge 5 ]; then
         MISSING_AGENTS+=("$dir (${file_count} files)")
     fi
