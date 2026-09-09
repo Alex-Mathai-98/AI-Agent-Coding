@@ -12,8 +12,12 @@ your-project/
 │   ├── commands/
 │   ├── hooks/                   # Hook scripts (e.g., check-agents-md.sh)
 │   ├── skills/                  # Custom slash command skills
+│   ├── worktrunk/               # Parallel-agent worktree hooks (post-start.sh, pre-remove.sh)
+│   ├── .config/                 # → move to project root (see Setup): holds wt.toml
 │   ├── settings.json
 │   └── ...
+├── .config/
+│   └── wt.toml                  # Worktrunk config — moved up from .claude/.config/ (see Setup)
 ├── src/
 │   └── ... (your project files)
 ├── tests/
@@ -37,7 +41,14 @@ git clone https://github.com/Alex-Mathai-98/AI-Agent-Coding.git .claude
 # 3. Move the tests folder to project root (same level as .claude)
 mv .claude/tests .
 
-# 4. Update anytime
+# 4. (Optional) For parallel-agent worktrees with worktrunk (`wt`):
+#    cut & paste the .config folder up to your PROJECT ROOT and track it in YOUR project's
+#    git. Worktrunk reads <project-root>/.config/wt.toml — it does NOT read .claude/ — so the
+#    folder must live at the root to seed new worktrees. The hooks stay in .claude/worktrunk/.
+mv .claude/.config .
+git add .config/wt.toml && git commit -m "chore: wire worktrunk hooks"
+
+# 5. Update anytime
 cd .claude && git pull
 ```
 
