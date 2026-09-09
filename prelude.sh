@@ -12,8 +12,10 @@ if [ -n "$CONDA_ENV" ] && [ -f "$CONDA_SH" ]; then
   source "$CONDA_SH" && conda activate "$CONDA_ENV"
 fi
 
-# --- Repo root = parent of this .claude/ dir. Portable: works from any cwd, no absolute path. ---
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# --- Repo root = parent of this .claude/ dir. Portable across bash + zsh, any cwd, no abs path. ---
+# zsh has no BASH_SOURCE; it falls back to the %x prompt escape (the file being sourced).
+_src="${BASH_SOURCE[0]:-${(%):-%x}}"
+REPO_ROOT="$(cd "$(dirname "$_src")/.." && pwd)"; unset _src
 
 # --- Auto-export project env from dev.env + PYTHONPATH (set -a exports everything in between) ---
 # Some projects want "$REPO_ROOT/src" instead of "$REPO_ROOT" on PYTHONPATH — adjust to taste.
