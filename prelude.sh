@@ -19,7 +19,7 @@ REPO_ROOT="$(cd "$(dirname "$_src")/.." && pwd)"; unset _src
 
 # --- Auto-export project env from dev.env + PYTHONPATH (set -a exports everything in between) ---
 # Some projects want "$REPO_ROOT/src" instead of "$REPO_ROOT" on PYTHONPATH — adjust to taste.
-set -a && \
-source "$REPO_ROOT/dev.env" && \
-export PYTHONPATH="$REPO_ROOT:${PYTHONPATH}" && \
+set -a
+[ -f "$REPO_ROOT/dev.env" ] && source "$REPO_ROOT/dev.env"
+export PYTHONPATH="$REPO_ROOT:${PYTHONPATH}"
 set +a
