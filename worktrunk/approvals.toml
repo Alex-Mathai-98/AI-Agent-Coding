@@ -1,6 +1,7 @@
 # Template approvals file for worktrunk hooks.
 # Copy to ~/.config/worktrunk/approvals.toml and fill in your project identifier.
 #
+# To find your project identifier: wt config show | grep Identifier
 # To generate automatically instead: wt config approvals add --yes
 
 [projects."<YOUR_PROJECT_IDENTIFIER>"]
