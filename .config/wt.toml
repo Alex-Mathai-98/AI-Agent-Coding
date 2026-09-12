@@ -12,10 +12,10 @@
 # reached by absolute path via {{ primary_worktree_path }}, which always points at the primary
 # worktree.
 
-# post-start: runs in the background just AFTER a new worktree is created. Seeds the worktree
+# pre-start: runs in the background just AFTER a new worktree is created. Seeds the worktree
 # via our own script, passing the primary worktree path as $1.
-[post-start]
-setup = "{{ primary_worktree_path }}/.claude/worktrunk/post-start.sh {{ primary_worktree_path }}"
+[pre-start]
+setup = "{{ primary_worktree_path }}/.claude/worktrunk/pre-start.sh {{ primary_worktree_path }}"
 
 # pre-remove: blocking hook that unmounts any bind mounts (e.g. a results:ro share) BEFORE
 # `wt remove`, else removal fails on the busy mountpoint. Runs in the worktree being removed.
