@@ -42,6 +42,13 @@ if [ -n "${WORKTRUNK_PROJECT_CONFIG_PATH:-}" ]; then
   fail 4 "WORKTRUNK_PROJECT_CONFIG_PATH is set to '$WORKTRUNK_PROJECT_CONFIG_PATH' — this overrides the default .config/wt.toml. Fix: unset WORKTRUNK_PROJECT_CONFIG_PATH (and remove from /etc/environment if present)"
 fi
 
+# ── Check 4b: DEV_ENV must be set to 'host' or 'container' ──
+if [ -z "${DEV_ENV:-}" ]; then
+  fail 4b "DEV_ENV is not set — source dev.env or docker.env first. Fix: add DEV_ENV=host (or container) to your env file"
+elif [ "$DEV_ENV" != "host" ] && [ "$DEV_ENV" != "container" ]; then
+  fail 4b "DEV_ENV is '$DEV_ENV' — must be 'host' or 'container'. Fix: set DEV_ENV=host or DEV_ENV=container in your env file"
+fi
+
 # ── Check 5: PATH contains .cargo ──
 if ! echo "$PATH" | grep -q '\.cargo'; then
   fail 5 "PATH does not contain .cargo/bin — wt and other Rust tools won't be found. Fix: export PATH=\$PATH:\$HOME/.cargo/bin"

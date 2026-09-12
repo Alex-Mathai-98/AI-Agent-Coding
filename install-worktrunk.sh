@@ -67,7 +67,13 @@ else
   echo "[install-worktrunk] wt already installed: $(wt --version)"
 fi
 
-# 4. Final verification — wt must actually run
+# 4. Shell integration (one-time) — lets `wt switch` auto-cd in the user's shell
+if command -v wt &>/dev/null && ! grep -q 'worktrunk' ~/.zshrc 2>/dev/null; then
+  echo "[install-worktrunk] Installing zsh shell integration..."
+  wt config shell install zsh --yes
+fi
+
+# 5. Final verification — wt must actually run
 if wt --version &>/dev/null; then
   echo "[install-worktrunk] Done. wt $(wt --version) at $(which wt)"
 else

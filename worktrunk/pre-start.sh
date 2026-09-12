@@ -23,6 +23,17 @@ SKIP=(NONE)
 #   rw   = read-write bind mount
 #   link = plain symlink          (read-write; no privileges needed)
 SHARE=(NONE)
+# AIDEV-NOTE: bind mounts (ro/rw) need mount privileges — use in containers only; use link on host.
+if [ "${DEV_ENV:-}" = "host" ]; then
+  # e.g. DEV_ENV=host:      SHARE=( "results:link" "output:link" )
+  SHARE=(NONE)
+elif [ "${DEV_ENV:-}" = "container" ]; then
+  # e.g. DEV_ENV=container: SHARE=( "results:ro" "output:rw" )
+  SHARE=(NONE)
+elif [ -n "${DEV_ENV:-}" ]; then
+  echo "[pre-start] ABORT: DEV_ENV='$DEV_ENV' — must be 'host' or 'container'." >&2
+  exit 1
+fi
 
 # Abort if any single entry about to be COPIED exceeds this many MB (0 disables the guard).
 MAX_COPY_MB=500
