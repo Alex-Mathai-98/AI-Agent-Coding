@@ -1,0 +1,10 @@
+# Template approvals file for worktrunk hooks.
+# Copy to ~/.config/worktrunk/approvals.toml and fill in your project identifier.
+#
+# To generate automatically instead: wt config approvals add --yes
+
+[projects."<YOUR_PROJECT_IDENTIFIER>"]
+approved-commands = [
+    "{{ primary_worktree_path }}/.claude/worktrunk/pre-start.sh {{ primary_worktree_path }}",
+    "{{ primary_worktree_path }}/.claude/worktrunk/pre-remove.sh",
+]
