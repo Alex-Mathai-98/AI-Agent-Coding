@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 # AIDEV-NOTE: portable prelude — MUST be SOURCED (not `bash`-run) so it sets env in *your* shell.
 
-# --- Install worktrunk (wt) if not already present ---
-bash "$(cd "$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")" && pwd)/install-worktrunk.sh"
 # Robust by design: conda is guarded so the SAME file works with or without conda (host vs
 # container), and REPO_ROOT is derived from this file's own path, so no project path is hardcoded.
 
