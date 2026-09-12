@@ -21,6 +21,14 @@
         "hooks": [
           {
             "type": "command",
+            "command": "bash .claude/install-worktrunk.sh"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
             "command": "bash .claude/hooks/validate-wt-config.sh"
           }
         ]
