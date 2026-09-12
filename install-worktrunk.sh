@@ -18,6 +18,14 @@ ensure_git_version() {
     return
   fi
 
+  # Git is too old — try to upgrade if we have root access
+  if [ "$(id -u)" -ne 0 ]; then
+    echo "[install-worktrunk] WARNING: Git $version is too old (need >= 2.43.0) but no root access to upgrade." >&2
+    echo "[install-worktrunk] WARNING: Continuing anyway — wt may fail at runtime." >&2
+    echo "[install-worktrunk] Fix: upgrade git manually (sudo apt-get install git or build from source)" >&2
+    return
+  fi
+
   echo "[install-worktrunk] Git $version is too old (need >= 2.43.0). Upgrading from source..."
 
   local build_dir="/tmp/git-upgrade"
@@ -42,7 +50,7 @@ ensure_git_version() {
 
 ensure_git_version
 
-# 3. Install Rust/Cargo if missing
+# 2. Install Rust/Cargo if missing
 if ! command -v cargo &>/dev/null; then
   echo "[install-worktrunk] Installing Rust toolchain via rustup..."
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -51,7 +59,7 @@ else
   echo "[install-worktrunk] Cargo already installed."
 fi
 
-# 4. Install worktrunk if missing
+# 3. Install worktrunk if missing
 if ! command -v wt &>/dev/null; then
   echo "[install-worktrunk] Installing worktrunk..."
   cargo install worktrunk
@@ -59,4 +67,12 @@ else
   echo "[install-worktrunk] wt already installed: $(wt --version)"
 fi
 
-echo "[install-worktrunk] Done. wt is at: $(which wt)"
+# 4. Final verification — wt must actually run
+if wt --version &>/dev/null; then
+  echo "[install-worktrunk] Done. wt $(wt --version) at $(which wt)"
+else
+  echo "[install-worktrunk] FAILED: wt is installed but cannot run." >&2
+  echo "[install-worktrunk] This usually means git is too old (need >= 2.43.0, have $(git --version))." >&2
+  echo "[install-worktrunk] Fix: upgrade git manually — sudo apt-get install git or build from source." >&2
+  exit 1
+fi
