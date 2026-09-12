@@ -30,8 +30,8 @@ if [ "${DEV_ENV:-}" = "host" ]; then
 elif [ "${DEV_ENV:-}" = "container" ]; then
   # e.g. DEV_ENV=container: SHARE=( "results:ro" "output:rw" )
   SHARE=(NONE)
-elif [ -n "${DEV_ENV:-}" ]; then
-  echo "[pre-start] ABORT: DEV_ENV='$DEV_ENV' — must be 'host' or 'container'." >&2
+else
+  echo "[pre-start] ABORT: DEV_ENV='${DEV_ENV:-<unset>}' — must be 'host' or 'container'." >&2
   exit 1
 fi
 
