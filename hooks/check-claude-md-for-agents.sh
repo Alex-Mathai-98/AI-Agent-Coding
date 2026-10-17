@@ -35,7 +35,9 @@ while IFS= read -r agents_file; do
         rel_dir="${dir#"$REPO_ROOT"/}"
         INCOMPLETE_CLAUDE+=("$rel_dir")
     fi
-done < <(find "$REPO_ROOT" -name "AGENTS.md" -not -path "*/.git/*" 2>/dev/null)
+# git ls-files, not find: respects .gitignore and .git/info/exclude (e.g. a worktree's .venv);
+# --others --exclude-standard also lists new AGENTS.md files that are not committed yet.
+done < <(git -C "$REPO_ROOT" ls-files --cached --others --exclude-standard -- 'AGENTS.md' '*/AGENTS.md' | sed "s|^|$REPO_ROOT/|")
 
 # ============================================================
 # CHECK 1: Missing CLAUDE.md next to AGENTS.md
