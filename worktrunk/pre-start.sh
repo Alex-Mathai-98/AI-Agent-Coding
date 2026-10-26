@@ -16,7 +16,9 @@ set -euo pipefail
 RESPECT_GITIGNORE=NONE
 
 # Never copied, never shared (repo-root-relative, no trailing slash).
-SKIP=(NONE)
+# AIDEV-NOTE: .venv is per checkout (its editable .pth points at its own src/); a copied one
+# would make the worktree run the primary's code. make-venv.sh creates a fresh one.
+SKIP=( ".venv" )
 
 # Shared from the primary instead of copied. Each entry is "path:mode":
 #   ro   = read-only bind mount   (needs mount privileges; aborts if it can't be made)
@@ -37,6 +39,9 @@ fi
 
 # Abort if any single entry about to be COPIED exceeds this many MB (0 disables the guard).
 MAX_COPY_MB=500
+
+# Extras for the new worktree's .venv (make-venv.sh), e.g. "dev" or "dev,test";  NONE = none.
+VENV_EXTRAS=NONE
 # ----------------------------------------------------------------------
 
 SRC="${1:-$(git rev-parse --show-toplevel)}"
@@ -68,6 +73,18 @@ in_list() {
   local item
   for item in "$@"; do
     [ "$item" = "$needle" ] && return 0
+  done
+  return 1
+}
+
+# Return 0 if the first argument is one of the remaining paths or lies under one of them.
+# AIDEV-NOTE: git can list a skipped dir's children one by one (e.g. .venv/bin, .venv/lib when
+# .venv/ holds its own .gitignore), so an exact match alone would copy them.
+under_any() {
+  local path="$1"; shift
+  local item
+  for item in "$@"; do
+    [ "$path" = "$item" ] || [ "${path#"$item"/}" != "$path" ] && return 0
   done
   return 1
 }
@@ -139,7 +156,7 @@ done
 } | while IFS= read -r -d '' entry; do
   rel="${entry%/}"                              # strip trailing slash from directory entries
   in_list "$rel" "${SHARE_NAMES[@]}" && continue
-  in_list "$rel" "${SKIP[@]}"        && continue
+  under_any "$rel" "${SKIP[@]}"      && continue
 
   if [ "$MAX_COPY_MB" -gt 0 ]; then
     size_mb="$(du -sm "$SRC/$rel" 2>/dev/null | cut -f1)"
@@ -154,4 +171,9 @@ done
   echo "[pre-start] copied $rel"
 done
 
+# AIDEV-NOTE: last step, inside the cleanup trap: a failure here removes the half-made worktree.
+# Runs in $DST: this script `cd`s to $SRC (the primary) for the seeding above, and make-venv.sh
+# builds the venv in its current folder.
+[ "$VENV_EXTRAS" = NONE ] && VENV_EXTRAS=""
+(cd "$DST" && VENV_EXTRAS="$VENV_EXTRAS" "$SRC/.claude/worktrunk/make-venv.sh")
 echo "[pre-start] done"
