@@ -19,6 +19,22 @@ WORKDIR @@WORKDIR@@
 # --- [PROJECT] dependency install ---
 @@DEP_INSTALL@@
 
+# --- [GENERIC] per-checkout venvs: the system Python must not provide the project ---
+# AIDEV-NOTE: each checkout (primary and every worktree) gets its own .venv with an editable
+# install of itself (.claude/worktrunk/make-venv.sh). Anything global (a system install,
+# PYTHONPATH) would make every worktree silently run one checkout's code.
+# pip >= 23 honours the PEP 668 marker below; uv creates the venvs.
+RUN pip install --no-cache-dir -U "pip>=23" uv
+# The build fails if the system Python can import any of these (newproject.conf).
+RUN for m in @@SYSTEM_PYTHON_FORBIDDEN_IMPORTS@@; do \
+      ! env -u PYTHONPATH python3 -c "import $m" 2>/dev/null \
+      || { echo "system python3 provides $m: install it in a venv instead" >&2; exit 1; }; \
+    done
+# PEP 668 marker: pip / uv refuse installs into the system Python (venvs are not affected).
+# The image's last pip use: nothing after this point installs into the system Python.
+RUN printf '[externally-managed]\nError=Use a venv: uv venv .venv && uv pip install -e .\n' \
+    > "$(python3 -c 'import sysconfig; print(sysconfig.get_path("stdlib"))')/EXTERNALLY-MANAGED"
+
 # --- [PROJECT] copy application files ---
 @@PROJECT_COPY@@
 

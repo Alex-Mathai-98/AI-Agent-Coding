@@ -38,12 +38,13 @@ docker compose -f docker-compose.sysbox.yml exec <service> zsh
 | `@@SYSTEM_PACKAGES@@` | Dockerfile | apt packages (language runtime, build tools) |
 | `@@WORKDIR@@`         | both       | app dir (default `/app`) |
 | `@@DEP_INSTALL@@`     | Dockerfile | copy manifest + install deps |
+| `@@SYSTEM_PYTHON_FORBIDDEN_IMPORTS@@` | Dockerfile | modules the system Python must not import (the build fails if it can) |
 | `@@PROJECT_COPY@@`    | Dockerfile | copy app source / files |
 | `@@ENV_VARS@@`        | Dockerfile | `ENV` lines |
 | `@@SERVICE_NAME@@`    | compose    | compose service name |
 | `@@ENV_FILE@@`        | compose    | host env file (default `./dev.env`) |
 | `@@VOLUMES@@`         | compose    | project bind mounts (YAML-indented) |
-| `@@COMPOSE_ENV@@`     | compose    | `environment:` entries (YAML-indented) |
+| `@@COMPOSE_ENV@@`     | compose    | `environment:` key + entries (YAML-indented), or empty |
 | `@@WATCH@@`           | compose    | `develop.watch` entries (YAML-indented) |
 
 ## How `newproject.conf` works

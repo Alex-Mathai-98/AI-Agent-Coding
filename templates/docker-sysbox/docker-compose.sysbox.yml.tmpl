@@ -9,7 +9,6 @@ services:
 @@VOLUMES@@
     env_file:
       - @@ENV_FILE@@        # host file → injected as env vars; NOT mounted into the container
-    environment:
 @@COMPOSE_ENV@@
     develop:
       watch:
