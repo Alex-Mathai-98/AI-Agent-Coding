@@ -22,5 +22,5 @@ REPO_ROOT="$(cd "$(dirname "$_src")/.." && pwd)"; unset _src
 # Some projects want "$REPO_ROOT/src" instead of "$REPO_ROOT" on PYTHONPATH — adjust to taste.
 set -a
 [ -f "$REPO_ROOT/dev.env" ] && source "$REPO_ROOT/dev.env"
-export PYTHONPATH="$REPO_ROOT/src:$REPO_ROOT:${PYTHONPATH}"
+export PYTHONPATH="$REPO_ROOT:${PYTHONPATH}"
 set +a
