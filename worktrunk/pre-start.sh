@@ -42,6 +42,10 @@ MAX_COPY_MB=500
 
 # Extras for the new worktree's .venv (make-venv.sh), e.g. "dev" or "dev,test";  NONE = none.
 VENV_EXTRAS=NONE
+
+# A project script run in the new worktree after its .venv (path relative to the worktree, plus
+# arguments), e.g. "scripts/setup.sh";  NONE = none. A failure aborts the worktree creation.
+PROJECT_SETUP=NONE
 # ----------------------------------------------------------------------
 
 SRC="${1:-$(git rev-parse --show-toplevel)}"
@@ -176,4 +180,8 @@ done
 # builds the venv in its current folder.
 [ "$VENV_EXTRAS" = NONE ] && VENV_EXTRAS=""
 (cd "$DST" && VENV_EXTRAS="$VENV_EXTRAS" "$SRC/.claude/worktrunk/make-venv.sh")
+if [ "$PROJECT_SETUP" != NONE ]; then
+  # shellcheck disable=SC2086  # word splitting wanted: script path plus its arguments
+  (cd "$DST" && bash $PROJECT_SETUP)
+fi
 echo "[pre-start] done"
